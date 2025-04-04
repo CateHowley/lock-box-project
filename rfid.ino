@@ -51,18 +51,46 @@ void setup() {
 	delay(4);				// Optional delay. Some board do need more time after init to be ready, see Readme
 	mfrc522.PCD_DumpVersionToSerial();	// Show details of PCD - MFRC522 Card Reader details
 	Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
+	pinMode(TRIGGERPIN, OUTPUT); // send pulse
+pinMode(ECHOPIN, INPUT);// input because reading pulsing that is coming in
+
 }
 
 void loop() {
 	// Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
-	
+	digitalWrite(TRIGGERPIN,LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIGGERPIN, HIGH);
+  delayMicroseconds(10);
+
+	float duration = pulseIn(ECHOPIN, HIGH); // read duration from sensor
+   // distance=speed*time
+   float speed = 0.034; // cm per micro seconds
+   float distance = speed * duration/2; // distnace between sensor hitting the way and coming back 
+   Serial.println(distance);
+   
+   if (distance > 10){
+  Serial.println("green go");
+   } 
+   if (distance < 10 && distance >5){
+    Serial.println("yellow slow down");
+   }
+   if (distance <= 5){
+   Serial.println ("stop red");
+   }
+
+
+   
+   delay(100);
+
+}
 
   if ( ! mfrc522.PICC_IsNewCardPresent()) {
 		return;
 	}
 
 	// Select one of the cards
-	if ( ! mfrc522.PICC_ReadCardSerial()) {
+	if ( ! mfrc522.PICC_ReadCardSerial()) { 
 		return;
 	}
 
