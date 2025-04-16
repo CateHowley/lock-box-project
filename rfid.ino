@@ -38,97 +38,94 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define RST_PIN         9          // Configurable, see typical pin layout above
-#define SS_PIN          10         // Configurable, see typical pin layout above
+#define RST_PIN 9  // Configurable, see typical pin layout above
+#define SS_PIN 10  // Configurable, see typical pin layout above
 
-#define TRIGGERPIN  5// this is the pin that sends out the pulse.         servo
- #define ECHOPIN 2 // this is the pin that reads the distance
+#define TRIGGERPIN 5  // this is the pin that sends out the pulse.         servo
+#define ECHOPIN 2     // this is the pin that reads the distance
 
- int const RX_PIN = 4; //this is the rx pin this recieves the bluetooth 
-int const TX_PIN = 3; // this tx pin transmits the bluetooth; 
+int const RX_PIN = 4;  //this is the rx pin this recieves the bluetooth
+int const TX_PIN = 3;  // this tx pin transmits the bluetooth;
 #include <SoftwareSerial.h>
-SoftwareSerial tooth(TX_PIN, RX_PIN); // make a bluetooth object
-// set tx and rx pins 
+SoftwareSerial tooth(TX_PIN, RX_PIN);  // make a bluetooth object
+// set tx and rx pins
 // tx goes first then rx
 char davis;
 
 
-#define ENABLE 5 // pin that the motor to turn on with insensity DC MOTOR
+#define ENABLE 5  // pin that the motor to turn on with insensity DC MOTOR
 #define DIRECTIONA 7
 #define DIRECTIONB 6
- 
+
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance
 
 void setup() {
-	Serial.begin(9600);		// Initialize serial communications with the PC
-	while (!Serial);		// Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
-	SPI.begin();			// Init SPI bus
-	mfrc522.PCD_Init();		// Init MFRC522
-	delay(4);				// Optional delay. Some board do need more time after init to be ready, see Readme
-	mfrc522.PCD_DumpVersionToSerial();	// Show details of PCD - MFRC522 Card Reader details
-	Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
-	pinMode(TRIGGERPIN, OUTPUT); // send pulse
-pinMode(ECHOPIN, INPUT);// input because reading pulsing that is coming in
+  Serial.begin(9600);  // Initialize serial communications with the PC
+  while (!Serial)
+    ;                                 // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
+  SPI.begin();                        // Init SPI bus
+  mfrc522.PCD_Init();                 // Init MFRC522
+  delay(4);                           // Optional delay. Some board do need more time after init to be ready, see Readme
+  mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
+  Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
+  pinMode(TRIGGERPIN, OUTPUT);  // send pulse
+  pinMode(ECHOPIN, INPUT);      // input because reading pulsing that is coming in
 
-pinMode (ENABLE, OUTPUT);
-  pinMode(DIRECTIONA,OUTPUT);
-  pinMode(DIRECTIONB,OUTPUT);
-
+  pinMode(ENABLE, OUTPUT);
+  pinMode(DIRECTIONA, OUTPUT);
+  pinMode(DIRECTIONB, OUTPUT);
 }
 
 void loop() {
-	// Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
-	digitalWrite(TRIGGERPIN,LOW);
+  // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
+  digitalWrite(TRIGGERPIN, LOW);
   delayMicroseconds(2);
   digitalWrite(TRIGGERPIN, HIGH);
   delayMicroseconds(10);
 
-	float duration = pulseIn(ECHOPIN, HIGH); // read duration from sensor
-   // distance=speed*time
-   float speed = 0.034; // cm per micro seconds
-   float distance = speed * duration/2; // distnace between sensor hitting the way and coming back 
-   Serial.println(distance);
-   
-   if (distance > 10){
-  Serial.println("green go");
-   } 
-   if (distance < 10 && distance >5){
-    Serial.println("yellow slow down");
-   }
-   if (distance <= 5){
-   Serial.println ("stop red");
-   }
+  float duration = pulseIn(ECHOPIN, HIGH);  // read duration from sensor
+  // distance=speed*time
+  float speed = 0.034;                    // cm per micro seconds
+  float distance = speed * duration / 2;  // distnace between sensor hitting the way and coming back
+  Serial.println(distance);
 
-   {
-  // put your main code here, to run repeatedly:
-  if(tooth.available() >0){
-    davis = tooth.read();
-    tooth.println("reading new imput:");
-    tooth.print(davis);
-
-
+  if (distance > 10) {
+    Serial.println("green go");
   }
-   if (davis == 'd'){
-    Serial.println("davis has value");
-   }
-   delay(100);
+  if (distance < 10 && distance > 5) {
+    Serial.println("yellow slow down");
+  }
+  if (distance <= 5) {
+    Serial.println("stop red");
+  }
 
+  {
+    // put your main code here, to run repeatedly:
+    if (tooth.available() > 0) {
+      davis = tooth.read();
+      tooth.println("reading new imput:");
+      tooth.print(davis);
+    }
+    if (davis == 'd') {
+      Serial.println("davis has value");
+    }
+    delay(100);
+  }
+
+
+  delay(100);
+
+
+
+if (!mfrc522.PICC_IsNewCardPresent()) {
+  return;
 }
 
-   
-   delay(100);
-
+// Select one of the cards
+if (!mfrc522.PICC_ReadCardSerial()) {
+  return;
 }
-
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-		return;
-	}
-
-	// Select one of the cards
-	if ( ! mfrc522.PICC_ReadCardSerial()) { 
-		return;
-	}
 
 MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
 
@@ -142,25 +139,20 @@ Serial.println("");
 
 
 
-mfrc522.PICC_HaltA(); // Halt PICC
+mfrc522.PICC_HaltA();  // Halt PICC
 
-
+}
 
 void printHex(byte *buffer, byte bufferSize) {
 
 
 
- //Serial.begin("reading?");
+  //Serial.begin("reading?");
 
-for (byte i = 0; i < bufferSize; i++) {
+  for (byte i = 0; i < bufferSize; i++) {
 
-Serial.print(buffer[i] < 0x10 ? " 0" : " ");
+    Serial.print(buffer[i] < 0x10 ? " 0" : " ");
 
-Serial.print(buffer[i], HEX);
-
+    Serial.print(buffer[i], HEX);
+  }
 }
-
-
-
-}
-
