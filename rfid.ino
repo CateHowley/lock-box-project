@@ -41,6 +41,23 @@
 #define RST_PIN         9          // Configurable, see typical pin layout above
 #define SS_PIN          10         // Configurable, see typical pin layout above
 
+#define TRIGGERPIN  5// this is the pin that sends out the pulse.         servo
+ #define ECHOPIN 2 // this is the pin that reads the distance
+
+ int const RX_PIN = 4; //this is the rx pin this recieves the bluetooth 
+int const TX_PIN = 3; // this tx pin transmits the bluetooth; 
+#include <SoftwareSerial.h>
+SoftwareSerial tooth(TX_PIN, RX_PIN); // make a bluetooth object
+// set tx and rx pins 
+// tx goes first then rx
+char davis;
+
+
+#define ENABLE 5 // pin that the motor to turn on with insensity DC MOTOR
+#define DIRECTIONA 7
+#define DIRECTIONB 6
+ 
+
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance
 
 void setup() {
@@ -53,6 +70,10 @@ void setup() {
 	Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
 	pinMode(TRIGGERPIN, OUTPUT); // send pulse
 pinMode(ECHOPIN, INPUT);// input because reading pulsing that is coming in
+
+pinMode (ENABLE, OUTPUT);
+  pinMode(DIRECTIONA,OUTPUT);
+  pinMode(DIRECTIONB,OUTPUT);
 
 }
 
@@ -79,6 +100,21 @@ void loop() {
    Serial.println ("stop red");
    }
 
+   {
+  // put your main code here, to run repeatedly:
+  if(tooth.available() >0){
+    davis = tooth.read();
+    tooth.println("reading new imput:");
+    tooth.print(davis);
+
+
+  }
+   if (davis == 'd'){
+    Serial.println("davis has value");
+   }
+   delay(100);
+
+}
 
    
    delay(100);
@@ -108,7 +144,7 @@ Serial.println("");
 
 mfrc522.PICC_HaltA(); // Halt PICC
 
-}
+
 
 void printHex(byte *buffer, byte bufferSize) {
 
@@ -124,4 +160,7 @@ Serial.print(buffer[i], HEX);
 
 }
 
+
+
 }
+
