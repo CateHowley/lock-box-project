@@ -44,19 +44,27 @@
 #define TRIGGERPIN 5  // this is the pin that sends out the pulse.         servo
 #define ECHOPIN 2     // this is the pin that reads the distance
 
+#include <Servo.h> 
+#define MICHAEL_PIN 7
+//make a servo object
+
+Servo  michael;
+
 int const RX_PIN = 4;  //this is the rx pin this recieves the bluetooth
 int const TX_PIN = 3;  // this tx pin transmits the bluetooth;
 #include <SoftwareSerial.h>
-SoftwareSerial tooth(TX_PIN, RX_PIN);  // make a bluetooth object
+SoftwareSerial tooth(TX_PIN, RX_PIN);  // make a bluetooth object DSD TECH 09c70333
 // set tx and rx pins
 // tx goes first then rx
 char davis;
+
+#define RED_LED 8  // where the red led is connected to arduino board
 
 
 #define ENABLE 5  // pin that the motor to turn on with insensity DC MOTOR
 #define DIRECTIONA 7
 #define DIRECTIONB 6
-
+bool lock = false;
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance
 
@@ -69,16 +77,24 @@ void setup() {
   delay(4);                           // Optional delay. Some board do need more time after init to be ready, see Readme
   mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
   Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
+
   pinMode(TRIGGERPIN, OUTPUT);  // send pulse
   pinMode(ECHOPIN, INPUT);      // input because reading pulsing that is coming in
 
   pinMode(ENABLE, OUTPUT);
   pinMode(DIRECTIONA, OUTPUT);
   pinMode(DIRECTIONB, OUTPUT);
+
+  pinMode(RED_LED, OUTPUT);
+    tooth.begin(9600);
+
+    michael.attach(MICHAEL_PIN); // connecting the serve object to the pin
+  michael.write(90); // set the start of propellor to 90 degrees
+
 }
 
 void loop() {
-  // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
+  //Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
   digitalWrite(TRIGGERPIN, LOW);
   delayMicroseconds(2);
   digitalWrite(TRIGGERPIN, HIGH);
@@ -92,55 +108,93 @@ void loop() {
 
   if (distance > 10) {
     Serial.println("green go");
+    digitalWrite(RED_LED, LOW);
   }
   if (distance < 10 && distance > 5) {
     Serial.println("yellow slow down");
+    digitalWrite(RED_LED, LOW);
+    lock=false;
   }
   if (distance <= 5) {
     Serial.println("stop red");
+    digitalWrite(RED_LED, HIGH);
+    lock=true;
   }
 
-  {
-    // put your main code here, to run repeatedly:
-    if (tooth.available() > 0) {
-      davis = tooth.read();
-      tooth.println("reading new imput:");
-      tooth.print(davis);
-    }
-    if (davis == 'd') {
-      Serial.println("davis has value");
-    }
-    delay(100);
+// Serial.println("bluetooth");
+delay(200);
+
+  // put your main code here, to run repeatedly:
+  if (tooth.available() > 0) {
+// Serial.println("bluetooth");
+
+    davis = tooth.read();
+    tooth.println("reading new imput:");
+    tooth.print(davis);
   }
+  if (davis == 'd') {
+    Serial.println("GO");
+    digitalWrite(RED_LED, HIGH);
+    delay(100);
+    digitalWrite(RED_LED, LOW);
+    delay(100);
+    digitalWrite(RED_LED, HIGH);
+    delay(100);
+    digitalWrite(RED_LED, LOW);
+    delay(100);
+    digitalWrite(RED_LED, HIGH);
+    delay(100);
+    digitalWrite(RED_LED, LOW);
+    delay(100);
+    lock=true;
+  }
+
+  delay(100);
+if(lock==true){
+   michael.write(0); // set the start of propellor to 90 degrees
+  delay(2000); 
+  michael.write(180); 
+  delay(2000);
+}
+  //to 100  
+
 
 
   delay(100);
+Serial.println("rfid");
+
+
+  if (!mfrc522.PICC_IsNewCardPresent()) {
+    Serial.println("new card?");
+
+    return;
+  }
+
+  // Select one of the cards
+  if (!mfrc522.PICC_ReadCardSerial()) {
+
+        Serial.println("read card?");
+
+    return;
+  }
+
+
+  	// mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+
+
+  MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
 
 
 
-if (!mfrc522.PICC_IsNewCardPresent()) {
-  return;
-}
+  Serial.print(F("RFID Tag UID:"));
 
-// Select one of the cards
-if (!mfrc522.PICC_ReadCardSerial()) {
-  return;
-}
+  printHex(mfrc522.uid.uidByte, mfrc522.uid.size);
 
-MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
+  Serial.println("");
 
 
 
-Serial.print(F("RFID Tag UID:"));
-
-printHex(mfrc522.uid.uidByte, mfrc522.uid.size);
-
-Serial.println("");
-
-
-
-mfrc522.PICC_HaltA();  // Halt PICC
-
+  mfrc522.PICC_HaltA();  // Halt PICC
 }
 
 void printHex(byte *buffer, byte bufferSize) {
